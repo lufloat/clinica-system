@@ -1,0 +1,24 @@
+{
+	# E-mail que o Let's Encrypt usa para avisar sobre o certificado.
+	email {$ACME_EMAIL:admin@example.com}
+}
+
+# Em produção vale o domínio (ex.: clinica.exemplo.com.br) e o Caddy emite o
+# certificado sozinho. Para testar na máquina local use "http://localhost",
+# que desliga o TLS e evita o Caddy tentar validar um domínio inexistente.
+{$SITE_ADDRESS:http://localhost} {
+
+	encode zstd gzip
+
+	# API, painel administrativo e estáticos do Django vão para o gunicorn.
+	# O /static/ é servido pelo WhiteNoise dentro do próprio backend.
+	@backend path /api/* /admin/* /static/*
+	handle @backend {
+		reverse_proxy backend:8000
+	}
+
+	# Todo o resto é o SPA servido pelo Nginx.
+	handle {
+		reverse_proxy frontend:80
+	}
+}

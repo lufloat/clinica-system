@@ -1,34 +1,24 @@
-import { Card, CardContent, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
 type Props = {
   title: string;
   value: number;
   icon: ReactNode;
+  color?: string;
+  bg?: string;
 };
 
-function StatCard({ title, value, icon }: Props) {
+function StatCard({ title, value, icon, color = "var(--primary)", bg = "var(--indigo-50)" }: Props) {
   return (
-    <Card sx={{ minWidth: 220 }}>
-      <CardContent>
-
-        <Typography
-          color="text.secondary"
-          gutterBottom
-        >
-          {title}
-        </Typography>
-
-        <Typography
-          variant="h4"
-        >
-          {value}
-        </Typography>
-
+    <div className="stat-card">
+      <div className="stat-card__icon" style={{ background: bg, color }}>
         {icon}
-
-      </CardContent>
-    </Card>
+      </div>
+      <div className="stat-card__body">
+        <span className="stat-card__value">{value}</span>
+        <span className="stat-card__title">{title}</span>
+      </div>
+    </div>
   );
 }
 

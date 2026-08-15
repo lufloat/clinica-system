@@ -1,7 +1,10 @@
 import api from "../api/axios";
 import type { Appointment } from "../pages/Appointments/appointment.types";
-export async function getAppointments() {
-  const response = await api.get("appointments/");
+/** `vertical` vazio = todas as áreas juntas (só o administrador geral). */
+export async function getAppointments(vertical?: string) {
+  const response = await api.get("appointments/", {
+    params: vertical ? { vertical } : {},
+  });
   return response.data;
 }
 

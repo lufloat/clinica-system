@@ -1,0 +1,650 @@
+.reports {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.reports-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.reports-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--slate-900);
+}
+
+.reports-header .subtitle {
+  margin: 4px 0 0;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+/* ---------- Barra única de filtros ---------- */
+
+.filterbar {
+  /* Altura única de todos os controles da barra. 46px é o piso imposto pelo
+     seletor de profissional: avatar de 30px e duas linhas de texto. Fixar a
+     altura evita que cada controle chegue a um valor diferente pelo padding. */
+  --control-h: 46px;
+
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+.filterbar .drp-trigger,
+.filterbar .preset-trigger,
+.filterbar .doctor-filter-trigger,
+.filterbar .filterbar-apply,
+.filterbar .split-btn-main,
+.filterbar .split-btn-toggle {
+  height: var(--control-h);
+  box-sizing: border-box;
+}
+
+/* rótulo compartilhado por todos os controles da barra */
+.filterbar-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+/* o profissional absorve a sobra; os demais mantêm o tamanho natural */
+.filterbar .doctor-filter,
+.filterbar .filterbar-field {
+  flex: 1 1 232px;
+}
+
+/* coluna rótulo + controle, igual à dos demais campos da barra */
+.filterbar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* o lugar do seletor quando não há escolha a fazer: o profissional restrito
+   só tem a própria agenda para relatar */
+.filterbar-static {
+  display: flex;
+  align-items: center;
+  height: var(--control-h);
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-muted, #F8FAFC);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filterbar-apply {
+  padding: 9px 18px;
+  font-size: 14px;
+}
+
+/* acompanha os controles, não a altura total da barra (que inclui os labels) */
+.filterbar-divider {
+  width: 1px;
+  height: var(--control-h);
+  margin: 0 2px;
+  background: var(--border);
+}
+
+/* em tela estreita a divisória viraria um risco solto */
+@media (max-width: 860px) {
+  .filterbar-divider {
+    display: none;
+  }
+
+  .filterbar .doctor-filter,
+  .filterbar .filterbar-field {
+    flex-basis: 100%;
+  }
+}
+
+.btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+
+.btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.btn--primary:hover { background: var(--primary-dark); color: #fff; }
+
+/* Metric cards */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+@media (max-width: 1100px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .metric-grid { grid-template-columns: 1fr; } }
+
+.metric-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.metric-card__label {
+  font-size: 13px;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-card__value {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--slate-900);
+  margin-top: 6px;
+  line-height: 1.1;
+}
+
+.metric-card__hint { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+.metric-card__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--slate-100);
+  margin-top: 12px;
+  overflow: hidden;
+}
+.metric-card__bar span { display: block; height: 100%; border-radius: 999px; }
+
+/* Panels grid */
+.reports-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 900px) { .reports-panels { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel__title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--slate-800);
+}
+
+/* Doctor breakdown bars */
+.doctor-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--slate-100);
+}
+.doctor-row:last-child { border-bottom: none; }
+
+.doctor-row__name { font-size: 14px; font-weight: 600; color: var(--slate-800); }
+.doctor-row__total { font-size: 14px; font-weight: 700; color: var(--slate-900); }
+
+.doctor-row__bar {
+  grid-column: 1 / -1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--slate-100);
+  overflow: hidden;
+}
+.doctor-row__bar span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+}
+
+/* Report table */
+.report-table-wrap { overflow-x: auto; }
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.report-table th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--text-light);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.report-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--slate-100);
+  color: var(--text);
+}
+
+.report-table tr:last-child td { border-bottom: none; }
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.badge--AGENDADA { background: var(--indigo-50); color: var(--indigo-700); }
+.badge--FINALIZADA { background: #ECFDF5; color: #047857; }
+.badge--CANCELADA { background: #FFF1F2; color: #BE123C; }
+
+.empty-state {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 14px;
+  padding: 40px 0;
+}
+
+.reports-skeleton {
+  height: 110px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, var(--slate-100) 25%, var(--slate-200) 50%, var(--slate-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ---------- Seletor de profissional ---------- */
+
+.doctor-filter {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 232px;
+}
+
+.doctor-filter-badge {
+  flex: 0 0 auto;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.doctor-filter-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px 6px 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.doctor-filter-trigger:hover {
+  border-color: var(--primary);
+}
+
+.doctor-filter-trigger.open,
+.doctor-filter-trigger:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+  outline: none;
+}
+
+.doctor-filter-avatar {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.doctor-filter-avatar-all {
+  background: var(--slate-100);
+  color: var(--text-light);
+  font-size: 18px;
+}
+
+.doctor-filter-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.doctor-filter-text strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doctor-filter-text small {
+  font-size: 11.5px;
+  color: var(--text-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doctor-filter-chevron {
+  flex: 0 0 auto;
+  color: var(--text-light);
+  font-size: 20px;
+  transition: transform .15s ease;
+}
+
+.doctor-filter-trigger.open .doctor-filter-chevron {
+  transform: rotate(180deg);
+}
+
+.doctor-filter-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .14);
+  max-height: 306px;
+  overflow-y: auto;
+}
+
+.doctor-filter-menu li + li {
+  margin-top: 2px;
+}
+
+.doctor-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.doctor-filter-option.active {
+  background: var(--slate-50);
+}
+
+.doctor-filter-option.selected {
+  background: color-mix(in srgb, var(--primary) 9%, transparent);
+}
+
+.doctor-filter-option.selected .doctor-filter-text strong {
+  color: var(--primary);
+}
+
+.doctor-filter-count {
+  flex: 0 0 auto;
+  min-width: 24px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--slate-100);
+  color: var(--text-light);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.doctor-filter-option.selected .doctor-filter-count {
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+}
+
+.doctor-filter-check {
+  flex: 0 0 auto;
+  font-size: 18px;
+  color: var(--primary);
+}
+
+/* ---------- Atalho (presets) ---------- */
+
+.preset-select {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 148px;
+}
+
+.preset-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.preset-trigger:hover {
+  border-color: var(--primary);
+}
+
+.preset-trigger.open,
+.preset-trigger:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+  outline: none;
+}
+
+.preset-chevron {
+  font-size: 20px;
+  color: var(--text-light);
+  transition: transform .15s ease;
+}
+
+.preset-trigger.open .preset-chevron {
+  transform: rotate(180deg);
+}
+
+.preset-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .14);
+}
+
+.preset-menu li + li {
+  margin-top: 2px;
+}
+
+.preset-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.preset-option.active {
+  background: var(--slate-50);
+}
+
+.preset-option.selected {
+  background: color-mix(in srgb, var(--primary) 9%, transparent);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.preset-check {
+  font-size: 17px;
+  color: var(--primary);
+}
+
+/* ---------- Split button (Exportar) ---------- */
+
+.split-btn {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.split-btn-main,
+.split-btn-toggle {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease;
+}
+
+.split-btn-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 10px 0 0 10px;
+}
+
+.split-btn-toggle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+  color: var(--text-light);
+}
+
+.split-btn-main:hover,
+.split-btn-toggle:hover,
+.split-btn-toggle.open {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.split-btn-main:focus-visible,
+.split-btn-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.split-btn-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 176px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, .14);
+}
+
+.split-btn-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.split-btn-item:hover {
+  background: var(--slate-50);
+  color: var(--primary);
+}
+
+/* Print */
+@media print {
+  .filterbar, .sidebar, .header, .app-sidebar, nav { display: none !important; }
+  .panel, .metric-card { break-inside: avoid; box-shadow: none; }
+}

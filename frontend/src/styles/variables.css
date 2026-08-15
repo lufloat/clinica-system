@@ -1,20 +1,36 @@
 :root{
-    --primary:#2563EB;
-    --primary-dark:#1D4ED8;
+    /* Indigo — cor de ação */
+    --indigo-50:#EEF2FF;
+    --indigo-200:#C7D2FE;
+    --indigo-400:#818CF8;
+    --indigo-500:#6366F1;
+    --indigo-600:#4F46E5;
+    --indigo-700:#4338CA;
 
-    --background:#F5F7FB;
+    /* Slate — superfícies e texto */
+    --slate-50:#F8FAFC;
+    --slate-100:#F1F5F9;
+    --slate-200:#E2E8F0;
+    --slate-700:#334155;
+    --slate-800:#1E293B;
+    --slate-900:#0F172A;
 
-    --sidebar:#1E293B;
+    --primary:var(--indigo-600);
+    --primary-dark:var(--indigo-700);
+
+    --background:var(--slate-50);
+
+    --sidebar:#0E1430;
 
     --card:#FFFFFF;
 
-    --text:#1F2937;
+    --text:var(--slate-700);
 
-    --text-light:#6B7280;
+    --text-light:#64748B;
 
-    --border:#E5E7EB;
+    --border:var(--slate-200);
 
-    --success:#16A34A;
+    --success:#10B981;
 
-    --danger:#DC2626;
+    --danger:#F43F5E;
 }

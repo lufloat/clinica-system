@@ -1,0 +1,94 @@
+# Stack de produção. Sobe com:
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# As variáveis vêm do arquivo .env na raiz do projeto (copiado de
+# .env.prod.example). Ele nunca vai para o Git.
+
+# Nome de projeto próprio: sem isto o Compose usaria o nome da pasta, o mesmo
+# da stack de desenvolvimento, e as duas passariam a compartilhar o volume do
+# Postgres — dois bancos escrevendo no mesmo diretório corrompem os dados.
+name: clinica-prod
+
+services:
+
+  db:
+    image: postgres:16
+    container_name: clinica-db-prod
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Sem "ports": o banco só é alcançável pela rede interna do Docker. Numa
+    # VPS, publicar a 5432 significa Postgres exposto à internet.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: clinica-backend-prod
+    # Todas as linhas na mesma indentação de propósito: no bloco ">" do YAML,
+    # linha mais indentada mantém a quebra, e o shell trataria os argumentos
+    # do gunicorn como comandos soltos — ele subiria em 127.0.0.1, fora do
+    # alcance do Caddy.
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+      python manage.py collectstatic --noinput &&
+      gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 60 --access-logfile -"
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: "False"
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS}
+      TIME_ZONE: ${TIME_ZONE:-America/Sao_Paulo}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "5432"
+    # Sem volume de código: em produção o que roda é o que está na imagem.
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Mesmo domínio do frontend: o axios usa caminho relativo e não há CORS.
+        VITE_API_URL: /api/
+    container_name: clinica-frontend-prod
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: clinica-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Guarda os certificados emitidos. Perder este volume faz o Caddy pedir
+      # tudo de novo e o Let's Encrypt tem limite de emissões por semana.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

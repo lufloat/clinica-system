@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 
-from decouple import config
+from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,10 +24,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Tudo que muda entre a máquina do dev e o servidor vem do .env. O padrão é
+# sempre o valor seguro: esquecer de definir derruba o deploy, não o expõe.
+DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+# Domínios que o Django aceita atender. Com DEBUG=False e a lista vazia,
+# qualquer requisição toma 400 — por isso o .env de produção precisa listar
+# o domínio real.
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    default="localhost,127.0.0.1",
+    cast=Csv(),
+)
 
 # Application definition
 
@@ -45,11 +53,13 @@ INSTALLED_APPS = [
 
     # Apps
     "apps.core",
+    "apps.verticals",
     "apps.accounts",
     "apps.doctors",
     "apps.patients",
     "apps.offices",
     "apps.appointments",
+    "apps.dental",
     "apps.documents",
     "apps.reports",
 ]
@@ -58,6 +68,8 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
 
     "django.middleware.security.SecurityMiddleware",
+    # Serve os estáticos do /admin em produção sem depender do Nginx.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -66,10 +78,21 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# Permite requisições do React (Vite)
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
+# Origens do frontend. Em desenvolvimento é o Vite; em produção, o domínio.
+# Quando os dois ficam no mesmo domínio (frontend e /api atrás do mesmo
+# proxy), o CORS deixa de ser exercido — mas a lista continua correta para
+# quem rodar o frontend separado.
+FRONTEND_ORIGINS = config(
+    "FRONTEND_ORIGINS",
+    default="http://localhost:5173,http://127.0.0.1:5173",
+    cast=Csv(),
+)
+
+CORS_ALLOWED_ORIGINS = FRONTEND_ORIGINS
+
+# O Django exige a origem completa (com esquema) para validar POSTs vindos
+# do /admin atrás do proxy HTTPS.
+CSRF_TRUSTED_ORIGINS = FRONTEND_ORIGINS
 
 ROOT_URLCONF = "config.urls"
 
@@ -122,9 +145,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "pt-br"
 
-TIME_ZONE = "UTC"
+# A VPS roda em UTC. Sem fixar o fuso, o "hoje" do painel e do relatório
+# vira o dia seguinte a partir das 21h no horário de Brasília.
+TIME_ZONE = config("TIME_ZONE", default="America/Sao_Paulo")
 
 USE_I18N = True
 
@@ -134,13 +159,46 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# Destino do collectstatic. Só é usado em produção, onde o WhiteNoise serve
+# esta pasta; em desenvolvimento o Django continua servindo direto dos apps.
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        # O storage com manifesto exige collectstatic rodado; em
+        # desenvolvimento isso quebraria o /admin com "Missing staticfiles
+        # manifest entry", então lá fica o storage simples.
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        ),
+    },
+}
+
 # Django REST Framework
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    # Fecha a API: por padrão todo endpoint exige autenticação.
+    # Os públicos (login) marcam AllowAny explicitamente.
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
 }
+
+# Senhas com bcrypt (requisito). Django continua lendo hashes antigos
+# (PBKDF2) e os migra para bcrypt no próximo login de cada usuário.
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+]
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=8),
@@ -148,3 +206,24 @@ SIMPLE_JWT = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------- Segurança em produção ----------
+
+# O Django fica atrás do Caddy, que termina o TLS. Sem isto ele acha que a
+# requisição é HTTP puro e monta URLs absolutas erradas.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
+
+    # Quem redireciona HTTP->HTTPS é o Caddy; deixar o Django fazer o mesmo
+    # criaria loop de redirecionamento atrás do proxy.
+    SECURE_SSL_REDIRECT = False
+
+    # HSTS sem includeSubDomains de propósito: o domínio pode hospedar o site
+    # institucional do cliente em outro subdomínio ainda sem HTTPS, e a
+    # diretiva forçaria HTTPS lá também, derrubando o site dele.
+    SECURE_HSTS_SECONDS = config("HSTS_SECONDS", default=31536000, cast=int)

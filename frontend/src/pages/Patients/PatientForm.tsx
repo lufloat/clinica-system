@@ -1,101 +1,169 @@
-import { useState } from "react";
-import Input from "../../components/ui/Input";
-import Button from "../../components/ui/Button";
+import { useEffect, useState } from "react";
+
+import Modal from "../../components/ui/Modal";
 
 import type { Patient } from "./patient.types";
-import { createPatient } from "../../services/patientService";
+import { createPatient, updatePatient } from "../../services/patientService";
+import { extractErrorMessage } from "../../utils/errors";
 
-type PatientFormProps = {
-  onPatientCreated: () => void;
+type Props = {
+  open: boolean;
+  /** quando presente, o formulário edita em vez de criar */
+  patient: Patient | null;
+  onClose: () => void;
+  onSaved: () => void;
 };
 
-function PatientForm({ onPatientCreated }: PatientFormProps) {
-  const [form, setForm] = useState<Patient>({
-    name: "",
-    cpf: "",
-    phone: "",
-    email: "",
-    birth_date: "",
-  });
+const EMPTY: Patient = {
+  name: "",
+  cpf: "",
+  phone: "",
+  email: "",
+  birth_date: "",
+};
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+const REQUIRED: Array<keyof Patient> = ["name", "cpf", "birth_date"];
+
+const LABELS: Record<string, string> = {
+  name: "Nome",
+  cpf: "CPF",
+  birth_date: "Data de nascimento",
+};
+
+export default function PatientForm({ open, patient, onClose, onSaved }: Props) {
+
+  const [form, setForm] = useState<Patient>(EMPTY);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setForm(patient ?? EMPTY);
+    setErrors({});
+  }, [open, patient]);
+
+  function setField(field: keyof Patient, value: string) {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: "" }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function validate(): boolean {
+    const found: Record<string, string> = {};
+
+    for (const field of REQUIRED) {
+      if (!String(form[field] ?? "").trim()) {
+        found[field] = `${LABELS[field]} é obrigatório.`;
+      }
+    }
+
+    setErrors(found);
+    return Object.keys(found).length === 0;
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (saving || !validate()) return;
 
     try {
-      await createPatient(form);
+      setSaving(true);
 
-      onPatientCreated();
+      if (patient?.id) {
+        await updatePatient(patient.id, form);
+      } else {
+        await createPatient(form);
+      }
 
-      setForm({
-        name: "",
-        cpf: "",
-        phone: "",
-        email: "",
-        birth_date: "",
-      });
-
-      alert("Paciente cadastrado com sucesso!");
+      onSaved();
+      onClose();
 
     } catch (error) {
-      console.error(error);
-      alert("Erro ao cadastrar paciente.");
+      setErrors({ form: extractErrorMessage(error) });
+    } finally {
+      setSaving(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Modal
+      open={open}
+      title={patient ? "Editar paciente" : "Novo paciente"}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="modal-body" noValidate>
 
-      <h2>Novo Paciente</h2>
+        {errors.form && (
+          <p className="form-error form-error-banner">{errors.form}</p>
+        )}
 
-      <Input
-        label="Nome"
-        name="name"
-        value={form.name}
-        onChange={handleChange}
-      />
+        <label className="field">
+          <span>Nome *</span>
+          <input
+            value={form.name}
+            className={errors.name ? "invalid" : ""}
+            onChange={(e) => setField("name", e.target.value)}
+            placeholder="Nome completo"
+          />
+          {errors.name && <p className="form-error">{errors.name}</p>}
+        </label>
 
-      <Input
-        label="CPF"
-        name="cpf"
-        value={form.cpf}
-        onChange={handleChange}
-      />
+        <div className="field-row">
+          <label className="field">
+            <span>CPF *</span>
+            <input
+              value={form.cpf}
+              className={errors.cpf ? "invalid" : ""}
+              onChange={(e) => setField("cpf", e.target.value)}
+              placeholder="000.000.000-00"
+            />
+            {errors.cpf && <p className="form-error">{errors.cpf}</p>}
+          </label>
 
-      <Input
-        label="Telefone"
-        name="phone"
-        value={form.phone}
-        onChange={handleChange}
-      />
+          <label className="field">
+            <span>Data de nascimento *</span>
+            <input
+              type="date"
+              value={form.birth_date}
+              className={errors.birth_date ? "invalid" : ""}
+              onChange={(e) => setField("birth_date", e.target.value)}
+            />
+            {errors.birth_date && (
+              <p className="form-error">{errors.birth_date}</p>
+            )}
+          </label>
+        </div>
 
-      <Input
-        label="Email"
-        name="email"
-        value={form.email}
-        onChange={handleChange}
-      />
+        <div className="field-row">
+          <label className="field">
+            <span>Telefone</span>
+            <input
+              value={form.phone}
+              onChange={(e) => setField("phone", e.target.value)}
+              placeholder="(00) 00000-0000"
+            />
+          </label>
 
-      <Input
-        label="Data de nascimento"
-        name="birth_date"
-        type="date"
-        value={form.birth_date}
-        onChange={handleChange}
-      />
+          <label className="field">
+            <span>E-mail</span>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setField("email", e.target.value)}
+              placeholder="Opcional"
+            />
+          </label>
+        </div>
 
-      <Button type="submit">
-        Salvar
-      </Button>
+        <footer className="modal-foot">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Cancelar
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? "Salvando…" : "Salvar paciente"}
+          </button>
+        </footer>
 
-    </form>
+      </form>
+    </Modal>
   );
 }
-
-export default PatientForm;

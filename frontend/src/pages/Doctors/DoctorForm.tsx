@@ -1,159 +1,212 @@
 import { useEffect, useState } from "react";
-import {
-  createDoctor,
-  updateDoctor,
-} from "../../services/doctorService";
-import type { Doctor } from "./doctor.types";
-import {
-  TextField,
-  Button,
-  Stack,
-} from "@mui/material";
 
-type DoctorFormProps = {
+import Modal from "../../components/ui/Modal";
+
+import type { Council, Doctor } from "./doctor.types";
+import { createDoctor, updateDoctor } from "../../services/doctorService";
+import { extractErrorMessage } from "../../utils/errors";
+import { useCurrentUser } from "../../utils/useCurrentUser";
+
+type Props = {
+  open: boolean;
+  /** quando presente, o formulário edita em vez de criar */
   doctor: Doctor | null;
-  onDoctorCreated: () => void;
-  onFinishEdit: () => void;
+  onClose: () => void;
+  onSaved: () => void;
 };
 
-function DoctorForm({
-  doctor,
-  onDoctorCreated,
-  onFinishEdit,
-}: DoctorFormProps) {
-  const [form, setForm] = useState<Doctor>({
-    name: "",
-    crm: "",
-    specialty: "",
-    phone: "",
-    email: "",
-  });
+/**
+ * Cada vertical usa um conselho só, e o backend recusa o par errado. Quem tem
+ * vertical não escolhe; o administrador geral escolhe.
+ */
+const COUNCIL_BY_VERTICAL: Record<string, Council> = {
+  medicina: "CRM",
+  odontologia: "CRO",
+};
 
-  // Preenche formulário no modo edição
+const EMPTY: Doctor = {
+  name: "",
+  council: "CRM",
+  council_code: "",
+  specialty: "",
+  phone: "",
+  email: "",
+};
+
+const REQUIRED: Array<keyof Doctor> = ["name", "council_code", "specialty"];
+
+export default function DoctorForm({ open, doctor, onClose, onSaved }: Props) {
+
+  const { user } = useCurrentUser();
+  const fixedCouncil = user?.vertical
+    ? COUNCIL_BY_VERTICAL[user.vertical.slug]
+    : undefined;
+
+  const [form, setForm] = useState<Doctor>(EMPTY);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+
+  // o próprio conselho é o rótulo do campo de registro: "CRM" ou "CRO"
+  const councilLabel = form.council;
+
+  const labels: Record<string, string> = {
+    name: "Nome",
+    council_code: councilLabel,
+    specialty: "Especialidade",
+  };
+
   useEffect(() => {
-    if (doctor) {
-      setForm({
-        name: doctor.name,
-        crm: doctor.crm,
-        specialty: doctor.specialty,
-        phone: doctor.phone,
-        email: doctor.email,
-      });
-    } else {
-      // limpa ao voltar para "novo médico"
-      setForm({
-        name: "",
-        crm: "",
-        specialty: "",
-        phone: "",
-        email: "",
-      });
-    }
-  }, [doctor]);
+    if (!open) return;
+    setForm(doctor ?? { ...EMPTY, council: fixedCouncil ?? "CRM" });
+    setErrors({});
+  }, [open, doctor, fixedCouncil]);
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+  function setField(field: keyof Doctor, value: string) {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: "" }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function validate(): boolean {
+    const found: Record<string, string> = {};
+
+    for (const field of REQUIRED) {
+      if (!String(form[field] ?? "").trim()) {
+        found[field] = `${labels[field]} é obrigatório.`;
+      }
+    }
+
+    setErrors(found);
+    return Object.keys(found).length === 0;
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (saving || !validate()) return;
 
     try {
+      setSaving(true);
 
-      if (form.id) {
-
-        await updateDoctor(form.id, form);
-
+      if (doctor?.id) {
+        await updateDoctor(doctor.id, form);
       } else {
-
         await createDoctor(form);
-
       }
 
-      onDoctorCreated();
-      onFinishEdit();
-
-      setForm({
-        id: undefined,
-        name: "",
-        crm: "",
-        specialty: "",
-        phone: "",
-        email: "",
-      });
+      onSaved();
+      onClose();
 
     } catch (error) {
-
-      console.error(error);
-
-      alert("Erro ao salvar médico.");
-
+      setErrors({ form: extractErrorMessage(error) });
+    } finally {
+      setSaving(false);
     }
   }
 
+  const noun = form.council === "CRO" ? "dentista" : "profissional";
+
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>
-        {doctor ? "Editar Médico" : "Novo Médico"}
-      </h2>
+    <Modal
+      open={open}
+      title={doctor ? `Editar ${noun}` : `Novo ${noun}`}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="modal-body" noValidate>
 
-      <Stack spacing={2}>
+        {errors.form && (
+          <p className="form-error form-error-banner">{errors.form}</p>
+        )}
 
-        <TextField
-          fullWidth
-          name="name"
-          label="Nome"
-          value={form.name}
-          onChange={handleChange}
-        />
+        <label className="field">
+          <span>Nome *</span>
+          <input
+            value={form.name}
+            className={errors.name ? "invalid" : ""}
+            onChange={(e) => setField("name", e.target.value)}
+            placeholder={
+              form.council === "CRO"
+                ? "Ex.: Dr. Caio Menezes"
+                : "Ex.: Dra. Helena Prado"
+            }
+          />
+          {errors.name && <p className="form-error">{errors.name}</p>}
+        </label>
 
-        <TextField
-          fullWidth
-          name="crm"
-          label="CRM"
-          value={form.crm}
-          onChange={handleChange}
-        />
+        <div className="field-row">
+          {/* sem vertical (administrador geral) o conselho é escolhido à mão */}
+          {!fixedCouncil && (
+            <label className="field">
+              <span>Conselho *</span>
+              <select
+                value={form.council}
+                onChange={(e) => setField("council", e.target.value)}
+              >
+                <option value="CRM">CRM</option>
+                <option value="CRO">CRO</option>
+              </select>
+            </label>
+          )}
 
-        <TextField
-          fullWidth
-          name="specialty"
-          label="Especialidade"
-          value={form.specialty}
-          onChange={handleChange}
-        />
+          <label className="field">
+            <span>{councilLabel} *</span>
+            <input
+              value={form.council_code}
+              className={errors.council_code ? "invalid" : ""}
+              onChange={(e) => setField("council_code", e.target.value)}
+              placeholder={`Ex.: ${councilLabel}-SP-12345`}
+            />
+            {errors.council_code && (
+              <p className="form-error">{errors.council_code}</p>
+            )}
+          </label>
 
-        <TextField
-          fullWidth
-          name="phone"
-          label="Telefone"
-          value={form.phone}
-          onChange={handleChange}
-        />
+          <label className="field">
+            <span>Especialidade *</span>
+            <input
+              value={form.specialty}
+              className={errors.specialty ? "invalid" : ""}
+              onChange={(e) => setField("specialty", e.target.value)}
+              placeholder={
+                form.council === "CRO" ? "Ex.: Ortodontia" : "Ex.: Cardiologia"
+              }
+            />
+            {errors.specialty && (
+              <p className="form-error">{errors.specialty}</p>
+            )}
+          </label>
+        </div>
 
-        <TextField
-          fullWidth
-          name="email"
-          label="Email"
-          value={form.email}
-          onChange={handleChange}
-        />
+        <div className="field-row">
+          <label className="field">
+            <span>Telefone</span>
+            <input
+              value={form.phone}
+              onChange={(e) => setField("phone", e.target.value)}
+              placeholder="(00) 00000-0000"
+            />
+          </label>
 
-        <Button
-          variant="contained"
-          type="submit"
-        >
-          {doctor ? "Atualizar" : "Salvar"}
-        </Button>
+          <label className="field">
+            <span>E-mail</span>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setField("email", e.target.value)}
+              placeholder="Opcional"
+            />
+          </label>
+        </div>
 
-      </Stack>
-    </form>
+        <footer className="modal-foot">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Cancelar
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? "Salvando…" : `Salvar ${noun}`}
+          </button>
+        </footer>
+
+      </form>
+    </Modal>
   );
 }
-
-export default DoctorForm;

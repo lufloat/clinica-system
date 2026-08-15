@@ -1,0 +1,10 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+*.sqlite3
+requirements.freeze.bak.txt
+node_modules/
+package.json
+package-lock.json
