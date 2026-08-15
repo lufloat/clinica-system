@@ -7,21 +7,27 @@ from .models import Doctor
 class DoctorAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "crm",
+        "council",
+        "council_code",
         "specialty",
+        "vertical",
         "phone",
         "active",
     )
 
     search_fields = (
         "name",
-        "crm",
+        "council_code",
         "specialty",
     )
 
     list_filter = (
+        "vertical",
+        "council",
         "active",
         "specialty",
     )
+
+    list_select_related = ("vertical",)
 
     ordering = ("name",)

@@ -22,4 +22,9 @@ export type Appointment = {
 
     status?:string;
 
+    /** injetada pelo backend a partir do perfil de quem agenda */
+    vertical?:number;
+
+    vertical_slug?:string;
+
 }

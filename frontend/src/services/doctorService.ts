@@ -1,8 +1,11 @@
 import api from "../api/axios";
 
+import type { Council } from "../pages/Doctors/doctor.types";
+
 export type DoctorDTO = {
   name: string;
-  crm: string;
+  council: Council;
+  council_code: string;
   specialty: string;
   phone: string;
   email: string;

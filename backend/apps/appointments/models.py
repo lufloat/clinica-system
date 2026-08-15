@@ -13,6 +13,14 @@ class Appointment(models.Model):
         ("CANCELADA", "Cancelada"),
     ]
 
+    # Separa as agendas. O paciente é compartilhado entre as verticais, então
+    # é esta coluna — e não o paciente — que diz de qual produto é o horário.
+    vertical = models.ForeignKey(
+        "verticals.Vertical",
+        on_delete=models.PROTECT,
+        related_name="appointments"
+    )
+
     patient = models.ForeignKey(
         Patient,
         on_delete=models.CASCADE,

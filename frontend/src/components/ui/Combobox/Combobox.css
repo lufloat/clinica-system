@@ -1,0 +1,116 @@
+.combobox {
+    position: relative;
+}
+
+.combobox-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 32px 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--card);
+}
+
+.combobox-input:focus-visible {
+    outline: 2px solid var(--indigo-400);
+    outline-offset: 1px;
+}
+
+.combobox-input.invalid {
+    border-color: var(--danger);
+}
+
+.combobox-clear {
+    position: absolute;
+    right: 8px;
+    top: 9px;
+    border: 0;
+    background: transparent;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--text-light);
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+
+.combobox-clear:hover {
+    background: var(--slate-100);
+    color: var(--text);
+}
+
+.combobox-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 190px;
+    overflow-y: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .16);
+    padding: 4px;
+}
+
+.combobox-list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 7px;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.combobox-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.combobox-hint {
+    flex-shrink: 0;
+    font-size: 11.5px;
+    color: var(--text-light);
+    font-variant-numeric: tabular-nums;
+}
+
+.combobox-list li.highlighted {
+    background: var(--indigo-50);
+    color: var(--indigo-700);
+    font-weight: 600;
+}
+
+.combobox-list li[aria-selected="true"]::after {
+    content: "✓";
+    flex-shrink: 0;
+    color: var(--indigo-600);
+    font-weight: 700;
+}
+
+.combobox-empty {
+    padding: 12px 10px;
+    font-size: 13px;
+    color: var(--text-light);
+    cursor: default;
+}
+
+.combobox-empty:hover {
+    background: transparent;
+}
+
+.combobox-more {
+    padding: 8px 10px;
+    margin-top: 2px;
+    border-top: 1px solid var(--border);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: default;
+    text-align: center;
+}

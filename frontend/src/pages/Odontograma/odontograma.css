@@ -1,0 +1,120 @@
+.odo-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .odo-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.odo-arches {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem 1.5rem;
+}
+
+.odo-quadrant-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-light);
+    margin-bottom: .35rem;
+}
+
+.odo-teeth {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.odo-tooth {
+    width: 40px;
+    height: 48px;
+    border-radius: 8px;
+    border: 1px solid var(--slate-200);
+    background: var(--card);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: .72rem;
+    color: var(--text);
+    transition: transform .08s ease, border-color .08s ease;
+}
+
+.odo-tooth:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+}
+
+.odo-tooth.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.odo-tooth-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.odo-tooth-count {
+    font-size: .62rem;
+    color: var(--text-light);
+}
+
+.odo-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1rem;
+    margin-top: 1rem;
+    font-size: .74rem;
+    color: var(--text-light);
+}
+
+.odo-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.odo-panel {
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    padding: 1rem;
+    background: var(--card);
+}
+
+.odo-panel h3 {
+    margin: 0 0 .75rem;
+    font-size: .95rem;
+}
+
+.odo-record {
+    border-top: 1px solid var(--slate-100);
+    padding: .5rem 0;
+    font-size: .8rem;
+}
+
+.odo-record-head {
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+    align-items: baseline;
+}
+
+.odo-record-meta {
+    color: var(--text-light);
+    font-size: .72rem;
+}
+
+.odo-empty {
+    color: var(--text-light);
+    font-size: .8rem;
+}
